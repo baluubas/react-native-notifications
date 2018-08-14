@@ -405,10 +405,19 @@ RCT_EXPORT_MODULE()
 
 + (void)requestPermissionsWithCategories:(NSMutableSet *)categories
 {
-    UIUserNotificationType types = (UIUserNotificationType) (UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert);
-    UIUserNotificationSettings* settings = [UIUserNotificationSettings settingsForTypes:types categories:categories];
-
-    [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+    if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"10")) {
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert + UNAuthorizationOptionSound + UNAuthorizationOptionBadge) completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if(!error) {
+                [[UIApplication sharedApplication] registerForRemoteNotifications];
+            }
+        }];
+    } else {
+        UIUserNotificationType types = (UIUserNotificationType) (UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert);
+        UIUserNotificationSettings* settings = [UIUserNotificationSettings settingsForTypes:types categories:categories];
+        
+        [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+    }
 }
 
 + (void)emitNotificationActionForIdentifier:(NSString *)identifier responseInfo:(NSDictionary *)responseInfo userInfo:(NSDictionary *)userInfo  completionHandler:(void (^)())completionHandler
